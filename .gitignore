@@ -1,0 +1,5 @@
+.env
+node_modules/
+dist/
+tools/
+python_scripts/
