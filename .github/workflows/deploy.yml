@@ -28,10 +28,10 @@ jobs:
 
       - name: Build app
         env:
-          VITE_API_URL: https://your-backend-url.com/api
+          VITE_API_URL: https://mahlomatsebo-backend.onrender.com/api
         run: npm run build
 
-      - name: Upload Pages artifact
+      - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
         with:
           path: dist
