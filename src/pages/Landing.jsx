@@ -1,10 +1,41 @@
-import React from 'react';
+import React, { useEffect } from 'react';
+import { useLocation } from 'react-router-dom';
 import SectionHeading from '../components/SectionHeading';
 import ServiceCard from '../components/ServiceCard';
 import EnquiryForm from '../components/EnquiryForm';
 import { accreditations, caseStudies, company, methodology, milestones, services, audience } from '../data/siteContent';
 
 export default function Landing() {
+  const location = useLocation();
+
+  useEffect(() => {
+    // robustly parse hash for patterns like '#/contact' or '#contact' or '#/#contact'
+    const rawHash = location.hash || window.location.hash || '';
+    if (!rawHash) return;
+    let cleaned = rawHash;
+    // remove leading '#/' or '#/#' patterns
+    if (cleaned.startsWith('#/')) cleaned = cleaned.slice(2);
+    if (cleaned.startsWith('#')) cleaned = cleaned.slice(1);
+    if (cleaned.startsWith('/')) cleaned = cleaned.slice(1);
+    // after cleaning, cleaned should be the id (e.g., 'contact')
+    if (!cleaned) return;
+
+    // try immediate scroll; if element not yet present, retry shortly after render
+    const tryScroll = () => {
+      const el = document.getElementById(cleaned);
+      if (el) {
+        el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        return true;
+      }
+      return false;
+    };
+
+    if (!tryScroll()) {
+      const t = setTimeout(() => tryScroll(), 120);
+      return () => clearTimeout(t);
+    }
+  }, [location]);
+
   return (
     <>
       <section className="hero-section">
@@ -89,6 +120,7 @@ export default function Landing() {
         <div className="method-grid">
           {methodology.map((item) => (
             <div key={item.title} className="method-card">
+              {item.image && <img src={item.image} alt={item.title} style={{width:'100%', height:140, objectFit:'cover', borderRadius:8, marginBottom:8}} />}
               <h3>{item.title}</h3>
               <p>{item.description}</p>
             </div>
@@ -123,6 +155,9 @@ export default function Landing() {
             {accreditations.map((item) => (
               <span key={item} className="accreditation-pill">{item}</span>
             ))}
+          </div>
+          <div style={{marginTop:12}}>
+            <img src="https://images.unsplash.com/photo-1521737604893-d14cc237f11d?auto=format&fit=crop&w=900&q=80" alt="Community training" style={{width:'100%', borderRadius:10, objectFit:'cover'}} />
           </div>
         </div>
       </section>
@@ -177,6 +212,7 @@ export default function Landing() {
 
         <div className="contact-panel">
           <h3>Make an enquiry</h3>
+          <img src="https://images.unsplash.com/photo-1564865876596-4f3e1b5c3b6a?auto=format&fit=crop&w=900&q=80" alt="Map placeholder" style={{width:'100%', borderRadius:10, marginBottom:12, objectFit:'cover'}} />
           <EnquiryForm />
         </div>
       </section>

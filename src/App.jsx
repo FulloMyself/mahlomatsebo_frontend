@@ -47,10 +47,10 @@ export default function App() {
         </Link>
 
         <nav className="nav-links" aria-label="Main navigation">
-          <a href="#services">Services</a>
-          <a href="#methodology">Methodology</a>
-          <a href="#impact">Impact</a>
-          <a href="#contact">Contact</a>
+          <Link to="/#services">Services</Link>
+          <Link to="/#methodology">Methodology</Link>
+          <Link to="/#impact">Impact</Link>
+          <Link to="/#contact">Contact</Link>
           {user ? (
             <>
               <Link to="/dashboard">Dashboard</Link>
@@ -82,9 +82,9 @@ export default function App() {
             <h4>Quick links</h4>
             <ul>
               <li><a href="/">Home</a></li>
-              <li><a href="/#services">Services</a></li>
-              <li><a href="/#contact">Contact</a></li>
-              <li><a href="/auth">Sign in</a></li>
+              <li><Link to="/#services">Services</Link></li>
+              <li><Link to="/#contact">Contact</Link></li>
+              <li><Link to="/auth">Sign in</Link></li>
             </ul>
           </div>
 
