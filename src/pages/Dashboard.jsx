@@ -3,6 +3,7 @@ import api from '../apiClient';
 import StaffCalendar from '../components/StaffCalendar';
 import StaffStudentsPanel from '../components/StaffStudentsPanel';
 import ProfileSettings from '../components/ProfileSettings';
+import AdminCalendar from '../components/AdminCalendar';
 
 const defaultSummary = {
   totalUsers: 0,
@@ -84,10 +85,55 @@ export default function Dashboard({ user }) {
     }
   };
 
+  // Enroll modal state and handlers
+  const [enrollModal, setEnrollModal] = useState({ open: false, application: null, staffId: '' });
+  const [adminToast, setAdminToast] = useState({ text: '', type: '' });
+
+  // auto-dismiss admin toast
+  useEffect(() => {
+    if (!adminToast.text) return;
+    const t = setTimeout(() => setAdminToast({ text: '', type: '' }), 3500);
+    return () => clearTimeout(t);
+  }, [adminToast]);
+
+  const openEnrollModal = (application) => {
+    setEnrollModal({ open: true, application, staffId: '' });
+  };
+
+  const closeEnrollModal = () => setEnrollModal({ open: false, application: null, staffId: '' });
+
+  const handleConfirmEnrollment = async () => {
+    if (!enrollModal?.application) return;
+    const app = enrollModal.application;
+    try {
+      // mark application as enrolled
+      await api.put(`/trainings/applications/${app._id}/status`, { status: 'enrolled' });
+
+      // if admin selected a staff member, assign the student to that staff
+      if (enrollModal.staffId) {
+        // admin can call assign-student endpoint on behalf of staff
+        await api.post(`/staff/${enrollModal.staffId}/assign-student`, { studentId: app.user._id });
+      }
+
+      // refresh dashboard data
+      const response = await api.get('/users/dashboard');
+      setDashboardData(response.data);
+      // show success toast
+      setAdminToast({ text: 'Successful student enrolment', type: 'success' });
+      closeEnrollModal();
+    } catch (error) {
+      console.error('Confirm enrollment failed', error);
+      setAdminToast({ text: error?.response?.data?.message || 'Enrollment failed', type: 'error' });
+    }
+  };
+
   const summary = dashboardData?.summary || defaultSummary;
   const recentActivity = dashboardData?.recentActivity || [];
   const userList = dashboardData?.users || [];
   const applicationsQueue = dashboardData?.applications || [];
+
+  // derive set of users who already have an enrolled application
+  const enrolledUserIds = new Set((applicationsQueue || []).filter((a) => a.status === 'enrolled').map((a) => a.user?._id));
 
   const [activeTab, setActiveTab] = useState('overview');
 
@@ -150,6 +196,11 @@ export default function Dashboard({ user }) {
                 <h3>Admission control</h3>
                 <p>Accept student applications and confirm their placement for the course or programme they selected.</p>
               </article>
+
+              <article className="dashboard-panel-card" style={{gridColumn: '1 / -1'}}>
+                <h3>Admin calendar</h3>
+                <AdminCalendar recentActivity={recentActivity} />
+              </article>
             </div>
 
             <div className="dashboard-table-card">
@@ -170,7 +221,11 @@ export default function Dashboard({ user }) {
                       <td>{application.training?.title}</td>
                       <td><span className="status-pill ok">{application.status}</span></td>
                       <td>
-                        <button type="button" className="secondary-btn small-btn" onClick={() => handleEnrollmentUpdate(application._id, 'enrolled')}>Enroll</button>
+                        {application.status === 'enrolled' || enrolledUserIds.has(application.user?._id) ? (
+                          <button type="button" className="ghost-btn small-btn" disabled>Already enrolled</button>
+                        ) : (
+                          <button type="button" className="secondary-btn small-btn" onClick={() => openEnrollModal(application)}>Enroll</button>
+                        )}
                       </td>
                     </tr>
                   )) : (
@@ -229,6 +284,37 @@ export default function Dashboard({ user }) {
                 </tbody>
               </table>
             </div>
+
+            {/* Enrollment modal */}
+            {enrollModal.open && (
+              <div className="modal-backdrop">
+                <div className="modal-content">
+                  <div className="modal-header">
+                    <strong>Enroll student</strong>
+                    <button className="close-btn" onClick={closeEnrollModal}>&times;</button>
+                  </div>
+                  <div className="modal-body">
+                    <p><strong>Student:</strong> {enrollModal.application.user?.name} ({enrollModal.application.user?.email})</p>
+                    <p><strong>Programme:</strong> {enrollModal.application.training?.title}</p>
+
+                    <label style={{display:'block', marginTop:10}}>
+                      Assign to staff (optional)
+                      <select value={enrollModal.staffId} onChange={(e) => setEnrollModal((s) => ({...s, staffId: e.target.value}))}>
+                        <option value="">Do not assign</option>
+                        {userList.filter(u => u.role === 'staff').map(st => (
+                          <option key={st._id} value={st._id}>{st.name} — {st.email}</option>
+                        ))}
+                      </select>
+                    </label>
+
+                  </div>
+                  <div className="modal-footer">
+                    <button className="ghost-btn" onClick={closeEnrollModal}>Cancel</button>
+                    <button className="primary-btn" onClick={handleConfirmEnrollment}>Confirm enroll</button>
+                  </div>
+                </div>
+              </div>
+            )}
           </>
         )}
 
