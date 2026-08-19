@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import api, { setAuthToken } from '../api';
+import api, { setAuthToken } from '../apiClient';
 
 const emptyRegistration = {
   name: '',

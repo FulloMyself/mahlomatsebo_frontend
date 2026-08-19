@@ -1,14 +1,16 @@
 import React, { useEffect, useState, useRef } from 'react';
+import EventModal from './EventModal';
 import FullCalendar from '@fullcalendar/react';
 import dayGridPlugin from '@fullcalendar/daygrid';
 import timeGridPlugin from '@fullcalendar/timegrid';
 import interactionPlugin from '@fullcalendar/interaction';
-import api from '../api';
+import api from '../apiClient';
 
 export default function StaffCalendar({ user }) {
   const calendarRef = useRef(null);
   const [events, setEvents] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [selectedEvent, setSelectedEvent] = useState(null);
 
   useEffect(() => {
     if (!user) return;
@@ -73,18 +75,15 @@ export default function StaffCalendar({ user }) {
     }
   };
 
-  const handleEventClick = async (clickInfo) => {
-    const confirmed = window.confirm('Delete this schedule?');
-    if (!confirmed) return;
-
-    try {
-      await api.delete(`/schedules/${clickInfo.event.id}`);
-      clickInfo.event.remove();
-      setEvents((prev) => prev.filter((e) => e.id !== clickInfo.event.id));
-    } catch (err) {
-      console.error('Delete schedule failed', err);
-      alert(err?.response?.data?.message || 'Could not delete schedule');
-    }
+  const handleEventClick = (clickInfo) => {
+    const ev = clickInfo.event;
+    setSelectedEvent({
+      id: ev.id,
+      title: ev.title,
+      start: ev.start,
+      end: ev.end,
+      extendedProps: ev.extendedProps,
+    });
   };
 
   if (loading) return <div>Loading calendar...</div>;
@@ -106,6 +105,23 @@ export default function StaffCalendar({ user }) {
         eventDisplay="block"
         height={600}
       />
+
+      {selectedEvent && (
+        <EventModal
+          event={selectedEvent}
+          onClose={() => setSelectedEvent(null)}
+          onDelete={async (id) => {
+            try {
+              await api.delete(`/schedules/${id}`);
+              setEvents((prev) => prev.filter((e) => e.id !== id));
+              setSelectedEvent(null);
+            } catch (err) {
+              console.error('Delete schedule failed', err);
+              alert(err?.response?.data?.message || 'Could not delete schedule');
+            }
+          }}
+        />
+      )}
     </div>
   );
 }

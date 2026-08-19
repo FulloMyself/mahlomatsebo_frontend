@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import api from '../api';
+import api from '../apiClient';
 
 export default function StaffStudentsPanel({ user }) {
   const [students, setStudents] = useState([]);
@@ -21,27 +21,10 @@ export default function StaffStudentsPanel({ user }) {
     load();
   }, [user]);
 
-  const handleAssign = async () => {
-    const email = prompt('Student email to assign to you:');
-    if (!email) return;
-    try {
-      // Find student by email
-      const usersResp = await api.get('/users');
-      const found = (usersResp.data.users || []).find((u) => u.email === email);
-      if (!found) return alert('Student not found');
-      await api.post(`/staff/${user._id}/assign-student`, { studentId: found._id });
-      setStudents((prev) => [...prev, found]);
-    } catch (err) {
-      console.error('Assign failed', err);
-      alert(err?.response?.data?.message || 'Could not assign student');
-    }
-  };
-
   if (loading) return <div>Loading students...</div>;
 
   return (
     <div>
-      <button type="button" className="primary-btn" onClick={handleAssign} style={{marginBottom:12}}>Assign student</button>
       {students.length === 0 ? (
         <p>No students assigned yet.</p>
       ) : (
