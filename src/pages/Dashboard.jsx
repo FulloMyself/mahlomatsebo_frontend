@@ -1,5 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import api from '../api';
+import StaffCalendar from '../components/StaffCalendar';
+import StaffStudentsPanel from '../components/StaffStudentsPanel';
 
 const defaultSummary = {
   totalUsers: 0,
@@ -129,6 +131,18 @@ export default function Dashboard({ user }) {
             <h3>Admission control</h3>
             <p>Accept student applications and confirm their placement for the course or programme they selected.</p>
           </article>
+        </div>
+
+        <div className="dashboard-panels">
+          <section style={{flex:1, minWidth:520}}>
+            <h3>Class schedule</h3>
+            <StaffCalendar user={user} />
+          </section>
+
+          <aside style={{width:360}} className="dashboard-panel-card">
+            <h3>My students</h3>
+            <StaffStudentsPanel user={user} />
+          </aside>
         </div>
 
         <div className="dashboard-table-card">

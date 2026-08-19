@@ -71,13 +71,43 @@ export default function App() {
       </main>
 
       <footer className="site-footer">
-        <div>
-          <strong>{company.name}</strong>
-          <p>{company.address}</p>
+        <div className="footer-grid">
+          <div className="footer-column about">
+            <strong>{company.name}</strong>
+            <p className="tagline">{company.tagline}</p>
+            <p className="about-copy">Mahloma Tsebo Solutions delivers accredited training, safety and community-focused programmes that strengthen workplaces and learning environments.</p>
+          </div>
+
+          <div className="footer-column links">
+            <h4>Quick links</h4>
+            <ul>
+              <li><a href="/">Home</a></li>
+              <li><a href="/#services">Services</a></li>
+              <li><a href="/#contact">Contact</a></li>
+              <li><a href="/auth">Sign in</a></li>
+            </ul>
+          </div>
+
+          <div className="footer-column contact">
+            <h4>Contact</h4>
+            <p>{company.address}</p>
+            <p>{company.phone}</p>
+            <p>{company.email}</p>
+          </div>
+
+          <div className="footer-column social">
+            <h4>Connect</h4>
+            <p>Follow us on social media for updates and events.</p>
+            <div className="social-links">
+              <a href="#" aria-label="Twitter">Twitter</a>
+              <a href="#" aria-label="Facebook">Facebook</a>
+              <a href="#" aria-label="LinkedIn">LinkedIn</a>
+            </div>
+          </div>
         </div>
-        <div>
-          <p>{company.phone}</p>
-          <p>{company.email}</p>
+
+        <div className="footer-bottom">
+          <small>© {new Date().getFullYear()} {company.name}. All rights reserved.</small>
         </div>
       </footer>
     </div>

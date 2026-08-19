@@ -1,8 +1,5 @@
 import React, { useState } from 'react';
 import api, { setAuthToken } from '../api';
-import { demoCredentials } from '../data/siteContent';
-
-const roles = ['student', 'staff', 'admin'];
 
 const emptyRegistration = {
   name: '',
@@ -19,7 +16,6 @@ const emptyRegistration = {
 };
 
 export default function Auth({ onSignIn }) {
-  const [selectedRole, setSelectedRole] = useState('student');
   const [mode, setMode] = useState('login');
   const [loginUser, setLoginUser] = useState('');
   const [password, setPassword] = useState('');
@@ -30,17 +26,11 @@ export default function Auth({ onSignIn }) {
   const handleLoginSubmit = async (event) => {
     event.preventDefault();
 
-    const demo = demoCredentials[selectedRole];
-    const enteredUser = loginUser.trim().toLowerCase();
-    const email = enteredUser.includes('@') ? enteredUser : demo.email;
+    const enteredUser = loginUser.trim();
+    const email = enteredUser.includes('@') ? enteredUser : enteredUser; // expects username or email
 
     if (!password) {
       setError('Please enter your password.');
-      return;
-    }
-
-    if (enteredUser && enteredUser !== demo.username && !enteredUser.includes('@')) {
-      setError(`Use the ${selectedRole} demo username or email for this role.`);
       return;
     }
 
@@ -55,7 +45,7 @@ export default function Auth({ onSignIn }) {
 
       const user = {
         ...response.data,
-        role: response.data.role || selectedRole,
+        role: response.data.role || 'student',
       };
 
       setAuthToken(user.token);
@@ -68,12 +58,6 @@ export default function Auth({ onSignIn }) {
     }
   };
 
-  const fillDemoCredentials = () => {
-    const demo = demoCredentials[selectedRole];
-    setLoginUser(demo.username);
-    setPassword(demo.password);
-    setError('');
-  };
 
   const handleRegisterSubmit = async (event) => {
     event.preventDefault();
@@ -113,7 +97,7 @@ export default function Auth({ onSignIn }) {
       <div className="auth-card">
         <div className="auth-header">
           <span className="eyebrow">Member portal</span>
-          <h1>{mode === 'login' ? 'Sign in to your role dashboard' : 'Register as a student'}</h1>
+          <h1>{mode === 'login' ? 'Sign in to your dashboard' : 'Register as a student'}</h1>
         </div>
 
         <div className="mode-switch">
@@ -123,19 +107,6 @@ export default function Auth({ onSignIn }) {
 
         {mode === 'login' && (
           <>
-            <div className="role-tabs" role="tablist" aria-label="Role tabs">
-              {roles.map((role) => (
-                <button
-                  key={role}
-                  type="button"
-                  className={selectedRole === role ? 'role-tab active' : 'role-tab'}
-                  onClick={() => setSelectedRole(role)}
-                >
-                  {role}
-                </button>
-              ))}
-            </div>
-
             <form onSubmit={handleLoginSubmit} className="auth-form">
               <label>
                 Username or email
@@ -143,7 +114,7 @@ export default function Auth({ onSignIn }) {
                   type="text"
                   value={loginUser}
                   onChange={(event) => setLoginUser(event.target.value)}
-                  placeholder={demoCredentials[selectedRole].username}
+                  placeholder="username or email"
                 />
               </label>
 
@@ -153,7 +124,7 @@ export default function Auth({ onSignIn }) {
                   type="password"
                   value={password}
                   onChange={(event) => setPassword(event.target.value)}
-                  placeholder={demoCredentials[selectedRole].password}
+                  placeholder="password"
                 />
               </label>
 
@@ -163,7 +134,6 @@ export default function Auth({ onSignIn }) {
                 <button type="submit" className="primary-btn" disabled={loading}>
                   {loading ? 'Signing in...' : 'Continue'}
                 </button>
-                <button type="button" className="secondary-btn" onClick={fillDemoCredentials}>Use demo login</button>
               </div>
             </form>
           </>
@@ -306,18 +276,6 @@ export default function Auth({ onSignIn }) {
           </form>
         )}
 
-        <div className="demo-box">
-          <strong>Demo credentials</strong>
-          <ul>
-            {Object.entries(demoCredentials).map(([role, creds]) => (
-              <li key={role}>
-                <span>{role}</span>
-                <code>{creds.email}</code>
-                <code>{creds.password}</code>
-              </li>
-            ))}
-          </ul>
-        </div>
       </div>
     </section>
   );
