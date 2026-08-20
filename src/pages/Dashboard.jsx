@@ -34,6 +34,10 @@ export default function Dashboard({ user }) {
   const [selectedProgramId, setSelectedProgramId] = useState('');
   const [notes, setNotes] = useState('');
   const [message, setMessage] = useState('');
+  const [pendingBookings, setPendingBookings] = useState([]);
+  const [allBookings, setAllBookings] = useState([]);
+  const [staffList, setStaffList] = useState([]);
+  const [bookingModal, setBookingModal] = useState({ open: false, booking: null, staffId: '', action: '' });
 
   useEffect(() => {
     const loadData = async () => {
@@ -41,6 +45,21 @@ export default function Dashboard({ user }) {
         if (role === 'admin') {
           const response = await api.get('/users/dashboard');
           setDashboardData(response.data);
+          
+          // Fetch bookings for admin
+          try {
+            const [pendingResponse, allBookingsResponse, usersResponse] = await Promise.all([
+              api.get('/bookings/pending'),
+              api.get('/bookings'),
+              api.get('/users'),
+            ]);
+            
+            setPendingBookings(pendingResponse.data.bookings || []);
+            setAllBookings(allBookingsResponse.data.bookings || []);
+            setStaffList((usersResponse.data.users || []).filter(u => u.role === 'staff'));
+          } catch (error) {
+            console.warn('Bookings endpoints not available:', error);
+          }
         }
 
         const trainingResponse = await api.get('/trainings');
@@ -120,6 +139,51 @@ export default function Dashboard({ user }) {
     }
   };
 
+  // Handle booking review (approve/reject)
+  const handleBookingReview = async () => {
+    if (!bookingModal.booking) return;
+    
+    try {
+      if (bookingModal.action === 'approve') {
+        if (!bookingModal.staffId) {
+          setAdminToast({ text: 'Please select a staff member to assign.', type: 'error' });
+          return;
+        }
+        
+        await api.put(`/bookings/${bookingModal.booking._id}`, {
+          status: 'approved',
+          assignedStaffId: bookingModal.staffId,
+        });
+        
+        setAdminToast({ text: 'Booking approved successfully.', type: 'success' });
+      } else if (bookingModal.action === 'reject') {
+        const reason = prompt('Enter rejection reason:');
+        if (!reason) return;
+        
+        await api.put(`/bookings/${bookingModal.booking._id}`, {
+          status: 'rejected',
+          rejectionReason: reason,
+        });
+        
+        setAdminToast({ text: 'Booking rejected.', type: 'success' });
+      }
+      
+      // Refresh bookings
+      const [pendingResponse, allResponse] = await Promise.all([
+        api.get('/bookings/pending'),
+        api.get('/bookings'),
+      ]);
+      
+      setPendingBookings(pendingResponse.data.bookings || []);
+      setAllBookings(allResponse.data.bookings || []);
+      setBookingModal({ open: false, booking: null, staffId: '', action: '' });
+      
+    } catch (error) {
+      console.error('Booking review failed:', error);
+      setAdminToast({ text: error?.response?.data?.message || 'Failed to process booking.', type: 'error' });
+    }
+  };
+
   const summary = dashboardData?.summary || defaultSummary;
   const recentActivity = dashboardData?.recentActivity || [];
   const userList = dashboardData?.users || [];
@@ -140,8 +204,15 @@ export default function Dashboard({ user }) {
           <div className="role-badge">{role}</div>
         </div>
 
+        {adminToast.text && (
+          <div className={`toast ${adminToast.type}`}>
+            {adminToast.text}
+          </div>
+        )}
+
         <div className="dashboard-tabs">
           <button className={`tab ${activeTab === 'overview' ? 'active' : ''}`} onClick={() => setActiveTab('overview')}>Overview</button>
+          <button className={`tab ${activeTab === 'bookings' ? 'active' : ''}`} onClick={() => setActiveTab('bookings')}>Cubicle Bookings</button>
           <button className={`tab ${activeTab === 'profile' ? 'active' : ''}`} onClick={() => setActiveTab('profile')}>Profile Settings</button>
         </div>
 
@@ -167,6 +238,10 @@ export default function Dashboard({ user }) {
               <div className="metric-card">
                 <span>Active programmes</span>
                 <strong>{summary.activePrograms}</strong>
+              </div>
+              <div className="metric-card">
+                <span>Pending Bookings</span>
+                <strong>{pendingBookings.length}</strong>
               </div>
             </div>
 
@@ -304,8 +379,131 @@ export default function Dashboard({ user }) {
           </>
         )}
 
+        {activeTab === 'bookings' && (
+          <>
+            <div className="dashboard-table-card">
+              <h3>Pending Cubicle Bookings</h3>
+              <table>
+                <thead>
+                  <tr>
+                    <th>Student</th>
+                    <th>Cubicle</th>
+                    <th>Date</th>
+                    <th>Time</th>
+                    <th>Purpose</th>
+                    <th>Action</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {pendingBookings.length > 0 ? pendingBookings.map((booking) => (
+                    <tr key={booking._id}>
+                      <td>{booking.user?.name}</td>
+                      <td>{booking.cubicle?.name}</td>
+                      <td>{new Date(booking.date).toLocaleDateString()}</td>
+                      <td>{booking.startTime} - {booking.endTime}</td>
+                      <td>{booking.purpose}</td>
+                      <td>
+                        <button 
+                          className="secondary-btn small-btn" 
+                          style={{ marginRight: '0.5rem' }}
+                          onClick={() => setBookingModal({ open: true, booking, staffId: '', action: 'approve' })}
+                        >
+                          Approve
+                        </button>
+                        <button 
+                          className="ghost-btn small-btn"
+                          onClick={() => setBookingModal({ open: true, booking, staffId: '', action: 'reject' })}
+                        >
+                          Reject
+                        </button>
+                      </td>
+                    </tr>
+                  )) : (
+                    <tr>
+                      <td colSpan="6">No pending bookings.</td>
+                    </tr>
+                  )}
+                </tbody>
+              </table>
+            </div>
+
+            <div className="dashboard-table-card">
+              <h3>All Cubicle Bookings</h3>
+              <table>
+                <thead>
+                  <tr>
+                    <th>Student</th>
+                    <th>Cubicle</th>
+                    <th>Date</th>
+                    <th>Status</th>
+                    <th>Assigned Staff</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {allBookings.length > 0 ? allBookings.map((booking) => (
+                    <tr key={booking._id}>
+                      <td>{booking.user?.name}</td>
+                      <td>{booking.cubicle?.name}</td>
+                      <td>{new Date(booking.date).toLocaleDateString()}</td>
+                      <td><span className={`status-pill ${booking.status}`}>{booking.status}</span></td>
+                      <td>{booking.assignedStaff?.name || 'Not assigned'}</td>
+                    </tr>
+                  )) : (
+                    <tr>
+                      <td colSpan="5">No bookings yet.</td>
+                    </tr>
+                  )}
+                </tbody>
+              </table>
+            </div>
+          </>
+        )}
+
         {activeTab === 'profile' && (
           <ProfileSettings user={user} />
+        )}
+
+        {bookingModal.open && (
+          <div className="modal-backdrop">
+            <div className="modal-content">
+              <div className="modal-header">
+                <strong>{bookingModal.action === 'approve' ? 'Approve Booking' : 'Reject Booking'}</strong>
+                <button className="close-btn" onClick={() => setBookingModal({ open: false, booking: null, staffId: '', action: '' })}>&times;</button>
+              </div>
+              <div className="modal-body">
+                <p><strong>Student:</strong> {bookingModal.booking.user?.name}</p>
+                <p><strong>Cubicle:</strong> {bookingModal.booking.cubicle?.name}</p>
+                <p><strong>Date:</strong> {new Date(bookingModal.booking.date).toLocaleDateString()}</p>
+                <p><strong>Time:</strong> {bookingModal.booking.startTime} - {bookingModal.booking.endTime}</p>
+                <p><strong>Purpose:</strong> {bookingModal.booking.purpose}</p>
+                
+                {bookingModal.action === 'approve' && (
+                  <label style={{display:'block', marginTop: 15}}>
+                    Assign Staff Member
+                    <select 
+                      value={bookingModal.staffId} 
+                      onChange={(e) => setBookingModal({ ...bookingModal, staffId: e.target.value })}
+                      required
+                    >
+                      <option value="">Select staff member</option>
+                      {staffList.map(staff => (
+                        <option key={staff._id} value={staff._id}>{staff.name}</option>
+                      ))}
+                    </select>
+                  </label>
+                )}
+              </div>
+              <div className="modal-footer">
+                <button className="ghost-btn" onClick={() => setBookingModal({ open: false, booking: null, staffId: '', action: '' })}>Cancel</button>
+                <button 
+                  className={bookingModal.action === 'approve' ? 'primary-btn' : 'secondary-btn'} 
+                  onClick={handleBookingReview}
+                >
+                  {bookingModal.action === 'approve' ? 'Approve Booking' : 'Reject Booking'}
+                </button>
+              </div>
+            </div>
+          </div>
         )}
       </section>
     );
@@ -391,6 +589,11 @@ function StudentDashboardContent({
     purpose: ''
   });
 
+  // Check if student has active enrollment
+  const hasActiveEnrollment = applications.some(app => 
+    app.status === 'enrolled' || app.status === 'accepted' || app.status === 'applied'
+  );
+
   // Fetch student data from MongoDB
   useEffect(() => {
     const fetchStudentData = async () => {
@@ -465,14 +668,14 @@ function StudentDashboardContent({
     
     // Add booking events
     bookings.forEach(booking => {
-      if (booking.status !== 'cancelled') {
+      if (booking.status !== 'cancelled' && booking.status !== 'rejected') {
         const bookingDate = new Date(booking.date).toISOString().split('T')[0];
         events.push({
           title: `🔧 ${booking.cubicle?.name || 'Cubicle Booking'}`,
           start: `${bookingDate}T${booking.startTime}`,
           end: `${bookingDate}T${booking.endTime}`,
-          backgroundColor: booking.status === 'confirmed' ? '#2196F3' : '#FF9800',
-          borderColor: booking.status === 'confirmed' ? '#2196F3' : '#FF9800',
+          backgroundColor: booking.status === 'approved' ? '#2196F3' : '#FF9800',
+          borderColor: booking.status === 'approved' ? '#2196F3' : '#FF9800',
           extendedProps: {
             type: 'booking',
             status: booking.status,
@@ -501,11 +704,28 @@ function StudentDashboardContent({
       setBookings([...bookings, response.data.booking]);
       setBookingForm({ cubicleId: '', date: '', startTime: '', endTime: '', purpose: '' });
       setShowBookingModal(false);
-      setMessage('Booking requested successfully! Awaiting confirmation.');
+      setMessage('Booking requested successfully! Awaiting admin approval.');
       
     } catch (error) {
       console.error('Booking failed:', error);
       setMessage(error?.response?.data?.message || 'Booking failed. Please try again.');
+    }
+  };
+
+  // Handle cancel booking
+  const handleCancelBooking = async (bookingId) => {
+    if (!confirm('Are you sure you want to cancel this booking?')) return;
+    
+    try {
+      await api.delete(`/bookings/${bookingId}`);
+      
+      // Refresh bookings
+      const bookingsResponse = await api.get('/bookings/my-bookings');
+      setBookings(bookingsResponse.data.bookings || []);
+      
+    } catch (error) {
+      console.error('Cancel booking failed:', error);
+      alert(error?.response?.data?.message || 'Failed to cancel booking.');
     }
   };
 
@@ -536,8 +756,8 @@ function StudentDashboardContent({
         <div className="student-stat-card">
           <FaCalendarAlt className="student-stat-icon" />
           <div>
-            <h3>{bookings.filter(b => b.status === 'confirmed').length}</h3>
-            <p>Confirmed Bookings</p>
+            <h3>{bookings.filter(b => b.status === 'approved').length}</h3>
+            <p>Approved Bookings</p>
           </div>
         </div>
         <div className="student-stat-card">
@@ -703,11 +923,31 @@ function StudentDashboardContent({
                   <h4>{booking.cubicle?.name || 'Cubicle'}</h4>
                   <p>{new Date(booking.date).toLocaleDateString()} | {booking.startTime} - {booking.endTime}</p>
                   {booking.purpose && <p className="booking-purpose">{booking.purpose}</p>}
+                  {booking.assignedStaff && (
+                    <p className="booking-staff">
+                      Assigned Staff: {booking.assignedStaff.name}
+                    </p>
+                  )}
+                  {booking.rejectionReason && (
+                    <p className="booking-rejection">
+                      Reason: {booking.rejectionReason}
+                    </p>
+                  )}
                 </div>
               </div>
-              <span className={`booking-status ${booking.status}`}>
-                {booking.status}
-              </span>
+              <div className="booking-actions">
+                <span className={`booking-status ${booking.status}`}>
+                  {booking.status}
+                </span>
+                {(booking.status === 'pending' || booking.status === 'approved') && (
+                  <button 
+                    className="ghost-btn small-btn"
+                    onClick={() => handleCancelBooking(booking._id)}
+                  >
+                    Cancel
+                  </button>
+                )}
+              </div>
             </div>
           ))
         ) : (
@@ -742,26 +982,36 @@ function StudentDashboardContent({
         {activeTab === 'bookings' && renderBookingsTab()}
         {activeTab === 'applications' && (
           <div className="applications-tab">
-            <div className="dashboard-table-card">
-              <h3>Apply for a new course or programme</h3>
-              <form className="student-form" onSubmit={handleApplicationSubmit}>
-                <label>
-                  Select programme
-                  <select value={selectedProgramId} onChange={(event) => setSelectedProgramId(event.target.value)}>
-                    <option value="">Choose a course or programme</option>
-                    {programs.map((program) => (
-                      <option key={program._id} value={program._id}>{program.title}</option>
-                    ))}
-                  </select>
-                </label>
-                <label>
-                  Motivation / notes
-                  <textarea value={notes} onChange={(event) => setNotes(event.target.value)} placeholder="Tell us why you want to join this learning pathway." />
-                </label>
-                <button type="submit" className="primary-btn">Apply now</button>
-              </form>
-              {message && <p className="form-success">{message}</p>}
-            </div>
+            {hasActiveEnrollment ? (
+              <div className="dashboard-table-card">
+                <h3>Active Enrollment</h3>
+                <p className="enrollment-notice">
+                  You currently have an active course/program enrollment. 
+                  You must complete your current program before applying for a new one.
+                </p>
+              </div>
+            ) : (
+              <div className="dashboard-table-card">
+                <h3>Apply for a new course or programme</h3>
+                <form className="student-form" onSubmit={handleApplicationSubmit}>
+                  <label>
+                    Select programme
+                    <select value={selectedProgramId} onChange={(event) => setSelectedProgramId(event.target.value)}>
+                      <option value="">Choose a course or programme</option>
+                      {programs.map((program) => (
+                        <option key={program._id} value={program._id}>{program.title}</option>
+                      ))}
+                    </select>
+                  </label>
+                  <label>
+                    Motivation / notes
+                    <textarea value={notes} onChange={(event) => setNotes(event.target.value)} placeholder="Tell us why you want to join this learning pathway." />
+                  </label>
+                  <button type="submit" className="primary-btn">Apply now</button>
+                </form>
+                {message && <p className="form-success">{message}</p>}
+              </div>
+            )}
 
             <div className="dashboard-table-card">
               <h3>My applications</h3>
