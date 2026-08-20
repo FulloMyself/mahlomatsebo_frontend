@@ -4,6 +4,18 @@ import StaffCalendar from '../components/StaffCalendar';
 import StaffStudentsPanel from '../components/StaffStudentsPanel';
 import ProfileSettings from '../components/ProfileSettings';
 import AdminCalendar from '../components/AdminCalendar';
+import StudentCalendar from '../components/StudentCalendar';
+import { 
+  FaUserGraduate, 
+  FaCalendarAlt, 
+  FaBook, 
+  FaTools, 
+  FaClipboardCheck, 
+  FaCertificate, 
+  FaCalendarPlus, 
+  FaClock, 
+  FaMapMarkerAlt 
+} from 'react-icons/fa';
 
 const defaultSummary = {
   totalUsers: 0,
@@ -38,10 +50,6 @@ export default function Dashboard({ user }) {
           const profileResponse = await api.get('/users/profile');
           setApplications(profileResponse.data.applications || []);
         }
-
-        // For staff role we intentionally do not load global dashboard data — staff should only access
-        // their own students and schedules via dedicated endpoints handled by the Staff components.
-
       } catch (error) {
         console.error('Dashboard load failed', error);
       }
@@ -75,16 +83,6 @@ export default function Dashboard({ user }) {
     }
   };
 
-  const handleEnrollmentUpdate = async (id, status) => {
-    try {
-      await api.put(`/trainings/applications/${id}/status`, { status });
-      const response = await api.get('/users/dashboard');
-      setDashboardData(response.data);
-    } catch (error) {
-      console.error('Enrollment update failed', error);
-    }
-  };
-
   // Enroll modal state and handlers
   const [enrollModal, setEnrollModal] = useState({ open: false, application: null, staffId: '' });
   const [adminToast, setAdminToast] = useState({ text: '', type: '' });
@@ -106,19 +104,14 @@ export default function Dashboard({ user }) {
     if (!enrollModal?.application) return;
     const app = enrollModal.application;
     try {
-      // mark application as enrolled
       await api.put(`/trainings/applications/${app._id}/status`, { status: 'enrolled' });
 
-      // if admin selected a staff member, assign the student to that staff
       if (enrollModal.staffId) {
-        // admin can call assign-student endpoint on behalf of staff
         await api.post(`/staff/${enrollModal.staffId}/assign-student`, { studentId: app.user._id });
       }
 
-      // refresh dashboard data
       const response = await api.get('/users/dashboard');
       setDashboardData(response.data);
-      // show success toast
       setAdminToast({ text: 'Successful student enrolment', type: 'success' });
       closeEnrollModal();
     } catch (error) {
@@ -132,18 +125,9 @@ export default function Dashboard({ user }) {
   const userList = dashboardData?.users || [];
   const applicationsQueue = dashboardData?.applications || [];
 
-  // derive set of users who already have an enrolled application
   const enrolledUserIds = new Set((applicationsQueue || []).filter((a) => a.status === 'enrolled').map((a) => a.user?._id));
 
   const [activeTab, setActiveTab] = useState('overview');
-
-  // Shared small tab header
-  const Tabs = ({ onChange }) => (
-    <div className="dashboard-tabs">
-      <button className={`tab ${activeTab === 'overview' ? 'active' : ''}`} onClick={() => setActiveTab('overview')}>Overview</button>
-      <button className={`tab ${activeTab === 'profile' ? 'active' : ''}`} onClick={() => setActiveTab('profile')}>Profile Settings</button>
-    </div>
-  );
 
   if (role === 'admin') {
     return (
@@ -156,7 +140,10 @@ export default function Dashboard({ user }) {
           <div className="role-badge">{role}</div>
         </div>
 
-        <Tabs />
+        <div className="dashboard-tabs">
+          <button className={`tab ${activeTab === 'overview' ? 'active' : ''}`} onClick={() => setActiveTab('overview')}>Overview</button>
+          <button className={`tab ${activeTab === 'profile' ? 'active' : ''}`} onClick={() => setActiveTab('profile')}>Profile Settings</button>
+        </div>
 
         {activeTab === 'overview' && (
           <>
@@ -285,7 +272,6 @@ export default function Dashboard({ user }) {
               </table>
             </div>
 
-            {/* Enrollment modal */}
             {enrollModal.open && (
               <div className="modal-backdrop">
                 <div className="modal-content">
@@ -336,7 +322,10 @@ export default function Dashboard({ user }) {
           <div className="role-badge">{role}</div>
         </div>
 
-        <Tabs />
+        <div className="dashboard-tabs">
+          <button className={`tab ${activeTab === 'overview' ? 'active' : ''}`} onClick={() => setActiveTab('overview')}>Overview</button>
+          <button className={`tab ${activeTab === 'profile' ? 'active' : ''}`} onClick={() => setActiveTab('profile')}>Profile Settings</button>
+        </div>
 
         {activeTab === 'overview' && (
           <div className="dashboard-panels">
@@ -359,89 +348,522 @@ export default function Dashboard({ user }) {
     );
   }
 
+  // Student Dashboard
+  return <StudentDashboardContent 
+    user={user}
+    programs={programs}
+    applications={applications}
+    selectedProgramId={selectedProgramId}
+    setSelectedProgramId={setSelectedProgramId}
+    notes={notes}
+    setNotes={setNotes}
+    message={message}
+    setMessage={setMessage}
+    handleApplicationSubmit={handleApplicationSubmit}
+  />;
+}
+
+// Student Dashboard Content Component (Real MongoDB Integration)
+function StudentDashboardContent({ 
+  user, 
+  programs, 
+  applications, 
+  selectedProgramId, 
+  setSelectedProgramId, 
+  notes, 
+  setNotes, 
+  message, 
+  setMessage,
+  handleApplicationSubmit 
+}) {
+  const [activeTab, setActiveTab] = useState('overview');
+  const [enrolledPrograms, setEnrolledPrograms] = useState([]);
+  const [bookings, setBookings] = useState([]);
+  const [cubicles, setCubicles] = useState([]);
+  const [schedules, setSchedules] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [showBookingModal, setShowBookingModal] = useState(false);
+  const [bookingForm, setBookingForm] = useState({
+    cubicleId: '',
+    date: '',
+    startTime: '',
+    endTime: '',
+    purpose: ''
+  });
+
+  // Fetch student data from MongoDB
+  useEffect(() => {
+    const fetchStudentData = async () => {
+      try {
+        setLoading(true);
+        
+        // Fetch enrolled programs from applications
+        const enrolled = applications.filter(app => 
+          app.status === 'enrolled' || app.status === 'accepted'
+        );
+        setEnrolledPrograms(enrolled);
+        
+        // Fetch cubicles
+        try {
+          const cubiclesResponse = await api.get('/cubicles');
+          setCubicles(cubiclesResponse.data.cubicles || []);
+        } catch (error) {
+          console.warn('Cubicles endpoint not available yet:', error);
+          setCubicles([]);
+        }
+        
+        // Fetch student bookings
+        try {
+          const bookingsResponse = await api.get('/bookings/my-bookings');
+          setBookings(bookingsResponse.data.bookings || []);
+        } catch (error) {
+          console.warn('Bookings endpoint not available yet:', error);
+          setBookings([]);
+        }
+        
+        // Fetch student schedules
+        try {
+          const schedulesResponse = await api.get('/schedules', {
+            params: { student: user._id }
+          });
+          setSchedules(schedulesResponse.data.schedules || []);
+        } catch (error) {
+          console.warn('Schedules fetch failed:', error);
+          setSchedules([]);
+        }
+        
+      } catch (error) {
+        console.error('Failed to fetch student data:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchStudentData();
+  }, [applications, user._id]);
+
+  // Generate calendar events from real data
+  const generateCalendarEvents = () => {
+    const events = [];
+    
+    // Add schedule events
+    schedules.forEach(schedule => {
+      events.push({
+        title: `📚 ${schedule.title}`,
+        start: new Date(schedule.start),
+        end: new Date(schedule.end),
+        backgroundColor: '#4CAF50',
+        borderColor: '#4CAF50',
+        extendedProps: {
+          type: 'class',
+          location: schedule.location || 'TBD',
+          description: schedule.description,
+          staff: schedule.staff?.name
+        }
+      });
+    });
+    
+    // Add booking events
+    bookings.forEach(booking => {
+      if (booking.status !== 'cancelled') {
+        const bookingDate = new Date(booking.date).toISOString().split('T')[0];
+        events.push({
+          title: `🔧 ${booking.cubicle?.name || 'Cubicle Booking'}`,
+          start: `${bookingDate}T${booking.startTime}`,
+          end: `${bookingDate}T${booking.endTime}`,
+          backgroundColor: booking.status === 'confirmed' ? '#2196F3' : '#FF9800',
+          borderColor: booking.status === 'confirmed' ? '#2196F3' : '#FF9800',
+          extendedProps: {
+            type: 'booking',
+            status: booking.status,
+            purpose: booking.purpose
+          }
+        });
+      }
+    });
+    
+    return events;
+  };
+
+  // Handle booking submission with real API call
+  const handleBookingSubmit = async (e) => {
+    e.preventDefault();
+    
+    try {
+      const response = await api.post('/bookings', {
+        cubicleId: bookingForm.cubicleId,
+        date: bookingForm.date,
+        startTime: bookingForm.startTime,
+        endTime: bookingForm.endTime,
+        purpose: bookingForm.purpose
+      });
+      
+      setBookings([...bookings, response.data.booking]);
+      setBookingForm({ cubicleId: '', date: '', startTime: '', endTime: '', purpose: '' });
+      setShowBookingModal(false);
+      setMessage('Booking requested successfully! Awaiting confirmation.');
+      
+    } catch (error) {
+      console.error('Booking failed:', error);
+      setMessage(error?.response?.data?.message || 'Booking failed. Please try again.');
+    }
+  };
+
+  const timeSlots = [
+    { start: '08:00', end: '10:00', label: '08:00 - 10:00' },
+    { start: '10:00', end: '12:00', label: '10:00 - 12:00' },
+    { start: '13:00', end: '15:00', label: '13:00 - 15:00' },
+    { start: '15:00', end: '17:00', label: '15:00 - 17:00' },
+  ];
+
+  const renderOverviewTab = () => (
+    <div className="student-overview">
+      <div className="student-stats-grid">
+        <div className="student-stat-card">
+          <FaUserGraduate className="student-stat-icon" />
+          <div>
+            <h3>{enrolledPrograms.length}</h3>
+            <p>Enrolled Programs</p>
+          </div>
+        </div>
+        <div className="student-stat-card">
+          <FaBook className="student-stat-icon" />
+          <div>
+            <h3>{schedules.length}</h3>
+            <p>Scheduled Sessions</p>
+          </div>
+        </div>
+        <div className="student-stat-card">
+          <FaCalendarAlt className="student-stat-icon" />
+          <div>
+            <h3>{bookings.filter(b => b.status === 'confirmed').length}</h3>
+            <p>Confirmed Bookings</p>
+          </div>
+        </div>
+        <div className="student-stat-card">
+          <FaClipboardCheck className="student-stat-icon" />
+          <div>
+            <h3>{applications.filter(a => a.status === 'applied').length}</h3>
+            <p>Pending Applications</p>
+          </div>
+        </div>
+      </div>
+
+      <div className="red-seal-banner">
+        <FaCertificate className="red-seal-icon" />
+        <div>
+          <h3>Red Seal Qualification Candidate</h3>
+          <p>Complete your practical hours and assessments to qualify for trade certification.</p>
+        </div>
+      </div>
+
+      <div className="enrolled-programs-section">
+        <h3>My Enrolled Programs</h3>
+        {loading ? (
+          <p>Loading your programs...</p>
+        ) : enrolledPrograms.length > 0 ? (
+          enrolledPrograms.map(enrollment => {
+            const training = enrollment.training;
+            
+            return (
+              <div key={enrollment._id} className="program-card">
+                <div className="program-header">
+                  <div className="program-title">
+                    <h4>{training?.title || 'Program'}</h4>
+                    <span className="program-code">{training?.category || 'Training'}</span>
+                  </div>
+                  <div className="program-status">
+                    <span className={`status-pill ${enrollment.status}`}>
+                      {enrollment.status}
+                    </span>
+                  </div>
+                </div>
+                
+                <div className="program-info-grid">
+                  <div><strong>Type:</strong> {training?.type || 'N/A'}</div>
+                  <div><strong>Duration:</strong> {training?.duration || 'N/A'}</div>
+                  <div><strong>Facilitator:</strong> {training?.facilitator || 'TBD'}</div>
+                  <div><strong>Dates:</strong> {training?.startDate ? new Date(training.startDate).toLocaleDateString() : 'N/A'} to {training?.endDate ? new Date(training.endDate).toLocaleDateString() : 'N/A'}</div>
+                </div>
+                
+                {training?.description && (
+                  <p className="program-description">{training.description}</p>
+                )}
+                
+                {enrollment.notes && (
+                  <div className="enrollment-notes">
+                    <strong>Notes:</strong> {enrollment.notes}
+                  </div>
+                )}
+              </div>
+            );
+          })
+        ) : (
+          <div className="empty-state">
+            <p>You are not enrolled in any programs yet.</p>
+            <p>Apply for a program to get started.</p>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+
+  const renderCalendarTab = () => (
+    <div className="student-calendar-tab">
+      <StudentCalendar events={generateCalendarEvents()} />
+    </div>
+  );
+
+  const renderScheduleTab = () => (
+    <div className="student-schedule-tab">
+      <h3>My Schedule</h3>
+      {loading ? (
+        <p>Loading your schedule...</p>
+      ) : schedules.length > 0 ? (
+        <div className="schedule-items">
+          {schedules.map((schedule, idx) => (
+            <div key={idx} className="schedule-item class-item">
+              <FaBook className="schedule-icon" />
+              <div className="schedule-details">
+                <h5>{schedule.title}</h5>
+                {schedule.description && <p>{schedule.description}</p>}
+                <p>{new Date(schedule.start).toLocaleDateString()} at {new Date(schedule.start).toLocaleTimeString()}</p>
+                <p className="schedule-location">
+                  <FaMapMarkerAlt /> {schedule.location || 'TBD'}
+                </p>
+                {schedule.staff && (
+                  <p className="schedule-staff">
+                    Facilitator: {schedule.staff.name}
+                  </p>
+                )}
+              </div>
+            </div>
+          ))}
+        </div>
+      ) : (
+        <p className="empty-state">No scheduled sessions for you yet.</p>
+      )}
+    </div>
+  );
+
+  const renderBookingsTab = () => (
+    <div className="student-bookings-tab">
+      <div className="bookings-header">
+        <h3>Practical Cubicle Bookings</h3>
+        <button className="primary-btn" onClick={() => setShowBookingModal(true)}>
+          <FaCalendarPlus /> New Booking
+        </button>
+      </div>
+
+      <div className="cubicles-grid">
+        {cubicles.length > 0 ? cubicles.map(cubicle => (
+          <div key={cubicle._id} className="cubicle-card">
+            <div className="cubicle-header">
+              <FaTools className="cubicle-icon" />
+              <h4>{cubicle.name}</h4>
+            </div>
+            <p className="cubicle-type">{cubicle.type}</p>
+            <p className="cubicle-location">
+              <FaMapMarkerAlt /> {cubicle.location}
+            </p>
+            {cubicle.equipment && cubicle.equipment.length > 0 && (
+              <div className="cubicle-equipment">
+                {cubicle.equipment.map((item, idx) => (
+                  <span key={idx} className="equipment-tag">{item}</span>
+                ))}
+              </div>
+            )}
+            <div className={`availability-badge ${cubicle.status === 'available' ? 'available' : 'occupied'}`}>
+              {cubicle.status}
+            </div>
+            <button 
+              className={`btn ${cubicle.status === 'available' ? 'btn-primary' : 'btn-disabled'}`}
+              disabled={cubicle.status !== 'available'}
+              onClick={() => {
+                setBookingForm({ ...bookingForm, cubicleId: cubicle._id });
+                setShowBookingModal(true);
+              }}
+            >
+              {cubicle.status === 'available' ? 'Book This Cubicle' : 'Not Available'}
+            </button>
+          </div>
+        )) : (
+          <p className="empty-state">No cubicles available.</p>
+        )}
+      </div>
+
+      <div className="my-bookings">
+        <h3>My Bookings</h3>
+        {bookings.length > 0 ? (
+          bookings.map(booking => (
+            <div key={booking._id} className="booking-item">
+              <div className="booking-info">
+                <FaClock className="booking-icon" />
+                <div>
+                  <h4>{booking.cubicle?.name || 'Cubicle'}</h4>
+                  <p>{new Date(booking.date).toLocaleDateString()} | {booking.startTime} - {booking.endTime}</p>
+                  {booking.purpose && <p className="booking-purpose">{booking.purpose}</p>}
+                </div>
+              </div>
+              <span className={`booking-status ${booking.status}`}>
+                {booking.status}
+              </span>
+            </div>
+          ))
+        ) : (
+          <p className="empty-state">No bookings yet. Book a cubicle for your practical sessions.</p>
+        )}
+      </div>
+    </div>
+  );
+
   return (
-    <section className="dashboard-page">
+    <section className="dashboard-page student-dashboard">
       <div className="dashboard-header">
         <div>
           <span className="eyebrow">Student portal</span>
-          <h1>My student dashboard</h1>
+          <h1>My Learning Dashboard</h1>
         </div>
         <div className="role-badge">{user?.role || 'student'}</div>
       </div>
 
-      <div className="metric-grid">
-        <div className="metric-card">
-          <span>Student name</span>
-          <strong>{user?.name || 'Learner'}</strong>
-        </div>
-        <div className="metric-card">
-          <span>Applications</span>
-          <strong>{applications.length}</strong>
-        </div>
-        <div className="metric-card">
-          <span>Available programmes</span>
-          <strong>{programs.length}</strong>
-        </div>
+      <div className="student-dashboard-tabs">
+        <button className={`tab ${activeTab === 'overview' ? 'active' : ''}`} onClick={() => setActiveTab('overview')}>Overview</button>
+        <button className={`tab ${activeTab === 'calendar' ? 'active' : ''}`} onClick={() => setActiveTab('calendar')}>Calendar</button>
+        <button className={`tab ${activeTab === 'schedule' ? 'active' : ''}`} onClick={() => setActiveTab('schedule')}>Schedule</button>
+        <button className={`tab ${activeTab === 'bookings' ? 'active' : ''}`} onClick={() => setActiveTab('bookings')}>Cubicle Bookings</button>
+        <button className={`tab ${activeTab === 'applications' ? 'active' : ''}`} onClick={() => setActiveTab('applications')}>Course Applications</button>
       </div>
 
-      <div className="dashboard-panels">
-        <article className="dashboard-panel-card">
-          <h3>Application status</h3>
-          <p>Track the programmes you have applied for and wait for admin confirmation.</p>
-        </article>
-        <article className="dashboard-panel-card">
-          <h3>Study support</h3>
-          <p>Access upcoming sessions, note requests, and follow-up communication from staff.</p>
-        </article>
+      <div className="student-dashboard-content">
+        {activeTab === 'overview' && renderOverviewTab()}
+        {activeTab === 'calendar' && renderCalendarTab()}
+        {activeTab === 'schedule' && renderScheduleTab()}
+        {activeTab === 'bookings' && renderBookingsTab()}
+        {activeTab === 'applications' && (
+          <div className="applications-tab">
+            <div className="dashboard-table-card">
+              <h3>Apply for a new course or programme</h3>
+              <form className="student-form" onSubmit={handleApplicationSubmit}>
+                <label>
+                  Select programme
+                  <select value={selectedProgramId} onChange={(event) => setSelectedProgramId(event.target.value)}>
+                    <option value="">Choose a course or programme</option>
+                    {programs.map((program) => (
+                      <option key={program._id} value={program._id}>{program.title}</option>
+                    ))}
+                  </select>
+                </label>
+                <label>
+                  Motivation / notes
+                  <textarea value={notes} onChange={(event) => setNotes(event.target.value)} placeholder="Tell us why you want to join this learning pathway." />
+                </label>
+                <button type="submit" className="primary-btn">Apply now</button>
+              </form>
+              {message && <p className="form-success">{message}</p>}
+            </div>
+
+            <div className="dashboard-table-card">
+              <h3>My applications</h3>
+              <table>
+                <thead>
+                  <tr>
+                    <th>Programme</th>
+                    <th>Status</th>
+                    <th>Submitted</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {applications.length > 0 ? applications.map((application) => (
+                    <tr key={application._id}>
+                      <td>{application.training?.title || 'Programme'}</td>
+                      <td><span className="status-pill ok">{application.status}</span></td>
+                      <td>{new Date(application.createdAt).toLocaleDateString()}</td>
+                    </tr>
+                  )) : (
+                    <tr>
+                      <td colSpan="3">No applications submitted yet.</td>
+                    </tr>
+                  )}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        )}
       </div>
 
-      <div className="dashboard-table-card">
-        <h3>Apply for a new course or programme</h3>
-        <form className="student-form" onSubmit={handleApplicationSubmit}>
-          <label>
-            Select programme
-            <select value={selectedProgramId} onChange={(event) => setSelectedProgramId(event.target.value)}>
-              <option value="">Choose a course or programme</option>
-              {programs.map((program) => (
-                <option key={program._id} value={program._id}>{program.title}</option>
-              ))}
-            </select>
-          </label>
-          <label>
-            Motivation / notes
-            <textarea value={notes} onChange={(event) => setNotes(event.target.value)} placeholder="Tell us why you want to join this learning pathway." />
-          </label>
-          <button type="submit" className="primary-btn">Apply now</button>
-        </form>
-        {message && <p className="form-success">{message}</p>}
-      </div>
-
-      <div className="dashboard-table-card">
-        <h3>My applications</h3>
-        <table>
-          <thead>
-            <tr>
-              <th>Programme</th>
-              <th>Status</th>
-              <th>Submitted</th>
-            </tr>
-          </thead>
-          <tbody>
-            {applications.length > 0 ? applications.map((application) => (
-              <tr key={application._id}>
-                <td>{application.training?.title || 'Programme'}</td>
-                <td><span className="status-pill ok">{application.status}</span></td>
-                <td>{new Date(application.createdAt).toLocaleDateString()}</td>
-              </tr>
-            )) : (
-              <tr>
-                <td colSpan="3">No applications submitted yet.</td>
-              </tr>
-            )}
-          </tbody>
-        </table>
-      </div>
+      {showBookingModal && (
+        <div className="modal-overlay" onClick={() => setShowBookingModal(false)}>
+          <div className="modal-content" onClick={(e) => e.stopPropagation()}>
+            <div className="modal-header">
+              <h3>Book a Cubicle</h3>
+              <button className="close-btn" onClick={() => setShowBookingModal(false)}>×</button>
+            </div>
+            <form className="booking-form" onSubmit={handleBookingSubmit}>
+              <div className="form-group">
+                <label>Select Cubicle</label>
+                <select 
+                  value={bookingForm.cubicleId}
+                  onChange={(e) => setBookingForm({ ...bookingForm, cubicleId: e.target.value })}
+                  required
+                >
+                  <option value="">Choose a cubicle</option>
+                  {cubicles.filter(c => c.status === 'available').map(cubicle => (
+                    <option key={cubicle._id} value={cubicle._id}>
+                      {cubicle.name} - {cubicle.type}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              <div className="form-group">
+                <label>Date</label>
+                <input 
+                  type="date" 
+                  value={bookingForm.date}
+                  onChange={(e) => setBookingForm({ ...bookingForm, date: e.target.value })}
+                  min={new Date().toISOString().split('T')[0]}
+                  required
+                />
+              </div>
+              <div className="form-group">
+                <label>Time Slot</label>
+                <select 
+                  value={`${bookingForm.startTime}-${bookingForm.endTime}`}
+                  onChange={(e) => {
+                    const [start, end] = e.target.value.split('-');
+                    setBookingForm({ ...bookingForm, startTime: start, endTime: end });
+                  }}
+                  required
+                >
+                  <option value="">Select time slot</option>
+                  {timeSlots.map((slot, idx) => (
+                    <option key={idx} value={`${slot.start}-${slot.end}`}>
+                      {slot.label}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              <div className="form-group">
+                <label>Purpose</label>
+                <textarea 
+                  value={bookingForm.purpose}
+                  onChange={(e) => setBookingForm({ ...bookingForm, purpose: e.target.value })}
+                  placeholder="What will you be practicing?"
+                  required
+                />
+              </div>
+              <div className="modal-actions">
+                <button type="button" className="ghost-btn" onClick={() => setShowBookingModal(false)}>
+                  Cancel
+                </button>
+                <button type="submit" className="primary-btn">
+                  Confirm Booking
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </section>
   );
 }
-
