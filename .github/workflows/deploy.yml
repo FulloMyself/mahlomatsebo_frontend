@@ -28,7 +28,7 @@ jobs:
 
       - name: Build app
         env:
-          VITE_API_URL: https://mahlomatsebo-backend.onrender.com/api
+          VITE_API_URL: 'https://mahlomatsebo-backend-kilp.onrender.com/api'
         run: npm run build
 
       - name: Upload artifact
