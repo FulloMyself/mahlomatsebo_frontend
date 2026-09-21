@@ -1,5 +1,5 @@
 import React, { useEffect } from 'react';
-import { useLocation } from 'react-router-dom';
+import { Link, useLocation } from 'react-router-dom';
 import SectionHeading from '../components/SectionHeading';
 import ServiceCard from '../components/ServiceCard';
 import EnquiryForm from '../components/EnquiryForm';
@@ -50,8 +50,8 @@ export default function Landing() {
           </p>
 
           <div className="hero-actions">
-            <a href="#services" className="primary-btn">Explore services</a>
-            <a href="#contact" className="secondary-btn">Enquire now</a>
+            <Link to="/#services" className="primary-btn">Explore services</Link>
+            <Link to="/#contact" className="secondary-btn">Enquire now</Link>
           </div>
 
           <div className="mini-stats">
