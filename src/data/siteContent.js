@@ -19,7 +19,7 @@ export const services = [
     longDescription: 'Our ECD programmes equip participants with the skills required to support holistic child development in line with South African frameworks and national priorities.',
     alignment: ['ETDP SETA', 'SAQA', 'National Development Plan'],
     outcomes: ['Curriculum design', 'Child safety & health', 'Inclusive education', 'Classroom management'],
-    image: 'https://images.unsplash.com/photo-1534438327279-1a6a9f50d59d?auto=format&fit=crop&w=900&q=80'
+    image: 'https://images.unsplash.com/photo-1544717305-2782549b5136?auto=format&fit=crop&w=900&q=80'
   },
   {
     id: 'first-aid',
@@ -28,7 +28,7 @@ export const services = [
     longDescription: 'From basic CPR to advanced trauma response, our First Aid training gives individuals and teams the competence to operate in high-pressure situations.',
     alignment: ['OHS Act 85 of 1993', 'HWSETA', 'Department of Labour'],
     outcomes: ['CPR & wound care', 'AED use', 'Fracture management', 'Emergency coordination'],
-    image: 'https://images.unsplash.com/photo-1582719478175-6d9bf0a12b2d?auto=format&fit=crop&w=900&q=80'
+    image: 'https://images.unsplash.com/photo-1556740772-1a741367b93e?auto=format&fit=crop&w=900&q=80'
   },
   {
     id: 'fire-fighting',
@@ -37,7 +37,7 @@ export const services = [
     longDescription: 'Participants learn how to identify hazards, extinguish common fire classes, and respond safely in evacuation and emergency events.',
     alignment: ['South African safety regulations', 'ETDP SETA'],
     outcomes: ['Fire prevention', 'Extinguisher use', 'Evacuation drills', 'Safety protocols'],
-    image: 'https://images.unsplash.com/photo-1505575974474-5eebf3eafc7b?auto=format&fit=crop&w=900&q=80'
+    image: 'https://images.unsplash.com/photo-1505678261036-a3fcc5e884ee?auto=format&fit=crop&w=900&q=80'
   },
   {
     id: 'preparedness',
@@ -55,7 +55,7 @@ export const services = [
     longDescription: 'Our OHS programmes equip professionals with the knowledge to assess risk, implement safety culture, and manage compliance obligations effectively.',
     alignment: ['OHS Act', 'SAIOSH', 'Department of Labour'],
     outcomes: ['Hazard identification', 'Risk assessment', 'Policy implementation', 'Incident investigation'],
-    image: 'https://images.unsplash.com/photo-1581091870627-3a0b59a3f3e3?auto=format&fit=crop&w=900&q=80'
+    image: 'https://images.unsplash.com/photo-1521737604893-d14cc237f11d?auto=format&fit=crop&w=900&q=80'
   },
   {
     id: 'fire-services',
@@ -79,9 +79,9 @@ export const accreditations = [
 
 export const methodology = [
   { title: 'Interactive Workshops', description: 'Hands-on, scenario-based sessions that build confidence in real environments.', image: 'https://images.unsplash.com/photo-1529333166437-7750a6dd5a70?auto=format&fit=crop&w=800&q=80' },
-  { title: 'Blended Learning', description: 'Flexible delivery that combines practical instruction with guided theory and application.', image: 'https://images.unsplash.com/photo-1584697964154-0c7cbf0b8a2e?auto=format&fit=crop&w=800&q=80' },
+  { title: 'Blended Learning', description: 'Flexible delivery that combines practical instruction with guided theory and application.', image: 'https://images.unsplash.com/photo-1529333166437-7750a6dd5a70?auto=format&fit=crop&w=800&q=80' },
   { title: 'Case Studies', description: 'Context-driven learning rooted in local workplace and community safety challenges.', image: 'https://images.unsplash.com/photo-1526772662000-3f88f10405ff?auto=format&fit=crop&w=800&q=80' },
-  { title: 'Assessments', description: 'Competence checks and evaluations designed to support quality outcomes and compliance.', image: 'https://images.unsplash.com/photo-1581091012184-7f0e1f8f0b3b?auto=format&fit=crop&w=800&q=80' },
+  { title: 'Assessments', description: 'Competence checks and evaluations designed to support quality outcomes and compliance.', image: 'https://images.unsplash.com/photo-1526772662000-3f88f10405ff?auto=format&fit=crop&w=800&q=80' },
 ];
 
 export const milestones = [

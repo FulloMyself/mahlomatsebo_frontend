@@ -4,6 +4,7 @@ import Landing from './pages/Landing';
 import Dashboard from './pages/Dashboard';
 import Auth from './pages/Auth';
 import { company } from './data/siteContent';
+import logo from '../Logo.png';
 
 export default function App() {
   const [user, setUser] = useState(() => {
@@ -39,7 +40,7 @@ export default function App() {
     <div className="app-shell">
       <header className="topbar">
         <Link to="/" className="brand" aria-label="Mahloma Tsebo home">
-          <span className="brand-mark">M</span>
+          <img src={logo} alt="" className="brand-logo" />
           <span>
             <strong>{company.name}</strong>
             <small>{company.tagline}</small>

@@ -111,16 +111,13 @@ button {
   font-size: 0.68rem;
 }
 
-.brand-mark {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 2.5rem;
-  height: 2.5rem;
-  border-radius: 0.9rem;
-  background: linear-gradient(135deg, var(--primary) 0%, var(--accent) 100%);
-  color: white;
-  font-weight: 800;
+.brand-logo {
+  width: 3.25rem;
+  height: 3.25rem;
+  flex: 0 0 3.25rem;
+  object-fit: contain;
+  border-radius: 0.7rem;
+  background: white;
 }
 
 .nav-links {
@@ -163,6 +160,16 @@ button {
   border: 1px solid var(--primary-08);
   padding: 2.5rem;
   box-shadow: 0 12px 30px var(--shadow);
+}
+
+.hero-logo {
+  display: block;
+  width: 7rem;
+  height: 7rem;
+  margin-bottom: 1rem;
+  object-fit: contain;
+  border-radius: 1rem;
+  background: white;
 }
 
 .eyebrow {
@@ -615,6 +622,23 @@ button {
 
 .contact-panel {
   padding: 1.5rem;
+}
+
+.map-frame {
+  width: 100%;
+  height: 260px;
+  margin-bottom: 1rem;
+  overflow: hidden;
+  border: 1px solid var(--border);
+  border-radius: 0.8rem;
+  background: var(--panel-alt);
+}
+
+.map-frame iframe {
+  display: block;
+  width: 100%;
+  height: 100%;
+  border: 0;
 }
 
 .enquiry-form {

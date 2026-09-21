@@ -4,6 +4,7 @@ import SectionHeading from '../components/SectionHeading';
 import ServiceCard from '../components/ServiceCard';
 import EnquiryForm from '../components/EnquiryForm';
 import { accreditations, caseStudies, company, methodology, milestones, services, audience } from '../data/siteContent';
+import logo from '../../Logo.png';
 
 export default function Landing() {
   const location = useLocation();
@@ -40,6 +41,7 @@ export default function Landing() {
     <>
       <section className="hero-section">
         <div className="hero-copy">
+          <img src={logo} alt={`${company.name} official logo`} className="hero-logo" />
           <span className="eyebrow">Accredited training & safety solutions</span>
           <h1>{company.tagline}</h1>
           <p>
@@ -212,7 +214,14 @@ export default function Landing() {
 
         <div className="contact-panel">
           <h3>Make an enquiry</h3>
-          <img src="https://images.unsplash.com/photo-1564865876596-4f3e1b5c3b6a?auto=format&fit=crop&w=900&q=80" alt="Map placeholder" style={{width:'100%', borderRadius:10, marginBottom:12, objectFit:'cover'}} />
+          <div className="map-frame">
+            <iframe
+              title={`Google Maps location for ${company.name}`}
+              src="https://www.google.com/maps?q=5A+Schonland+Street,+Duncanville,+Vereeniging,+South+Africa&output=embed"
+              loading="lazy"
+              referrerPolicy="no-referrer-when-downgrade"
+            />
+          </div>
           <EnquiryForm />
         </div>
       </section>
