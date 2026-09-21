@@ -118,6 +118,7 @@ export const audience = [
 
 export const demoCredentials = {
   admin: { username: 'admin', email: 'admin@mahlomatsebosolutions.co.za', password: 'admin123' },
+  hr: { username: 'hr', email: 'hr@mahlomatsebosolutions.co.za', password: 'hr123' },
   staff: { username: 'staff', email: 'staff@mahlomatsebosolutions.co.za', password: 'staff123' },
   student: { username: 'student', email: 'student@mahlomatsebosolutions.co.za', password: 'student123' },
 };

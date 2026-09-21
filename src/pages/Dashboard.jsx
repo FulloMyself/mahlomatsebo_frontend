@@ -5,6 +5,7 @@ import StaffStudentsPanel from '../components/StaffStudentsPanel';
 import ProfileSettings from '../components/ProfileSettings';
 import AdminCalendar from '../components/AdminCalendar';
 import StudentCalendar from '../components/StudentCalendar';
+import { HRDashboard, HRAdminOversight } from '../components/HRDashboard';
 import { 
   FaUserGraduate, 
   FaCalendarAlt, 
@@ -21,6 +22,7 @@ const defaultSummary = {
   totalUsers: 0,
   totalStudents: 0,
   totalStaff: 0,
+  totalHR: 0,
   totalAdmins: 0,
   activePrograms: 0,
   totalApplications: 0,
@@ -213,6 +215,7 @@ export default function Dashboard({ user }) {
         <div className="dashboard-tabs">
           <button className={`tab ${activeTab === 'overview' ? 'active' : ''}`} onClick={() => setActiveTab('overview')}>Overview</button>
           <button className={`tab ${activeTab === 'bookings' ? 'active' : ''}`} onClick={() => setActiveTab('bookings')}>Cubicle Bookings</button>
+          <button className={`tab ${activeTab === 'hr' ? 'active' : ''}`} onClick={() => setActiveTab('hr')}>HR Oversight</button>
           <button className={`tab ${activeTab === 'profile' ? 'active' : ''}`} onClick={() => setActiveTab('profile')}>Profile Settings</button>
         </div>
 
@@ -230,6 +233,10 @@ export default function Dashboard({ user }) {
               <div className="metric-card">
                 <span>Staff</span>
                 <strong>{summary.totalStaff}</strong>
+              </div>
+              <div className="metric-card">
+                <span>HR users</span>
+                <strong>{summary.totalHR}</strong>
               </div>
               <div className="metric-card">
                 <span>Applications</span>
@@ -423,6 +430,7 @@ export default function Dashboard({ user }) {
                       <td colSpan="6">No pending bookings.</td>
                     </tr>
                   )}
+
                 </tbody>
               </table>
             </div>
@@ -458,6 +466,8 @@ export default function Dashboard({ user }) {
             </div>
           </>
         )}
+
+        {activeTab === 'hr' && <HRAdminOversight />}
 
         {activeTab === 'profile' && (
           <ProfileSettings user={user} />
@@ -544,6 +554,10 @@ export default function Dashboard({ user }) {
         )}
       </section>
     );
+  }
+
+  if (role === 'hr') {
+    return <HRDashboard user={user} />;
   }
 
   // Student Dashboard
