@@ -100,9 +100,8 @@ export default function App() {
             <h4>Connect</h4>
             <p>Follow us on social media for updates and events.</p>
             <div className="social-links">
-              <a href="#" aria-label="Twitter">Twitter</a>
-              <a href="#" aria-label="Facebook">Facebook</a>
-              <a href="#" aria-label="LinkedIn">LinkedIn</a>
+              <a href="https://www.facebook.com/profile.php?id=61573470690383" target="_blank" rel="noreferrer" aria-label="Facebook">Facebook</a>
+              <a href="https://www.linkedin.com/company/mahloma-tsebo-solutions/about/" target="_blank" rel="noreferrer" aria-label="LinkedIn">LinkedIn</a>
             </div>
           </div>
         </div>

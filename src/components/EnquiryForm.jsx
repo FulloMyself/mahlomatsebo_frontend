@@ -20,6 +20,21 @@ export default function EnquiryForm() {
 
   const handleSubmit = (event) => {
     event.preventDefault();
+    const whatsappMessage = [
+      'Hello Mahloma Tsebo Solutions, I would like to make an enquiry.',
+      `Name: ${form.name}`,
+      `Organisation: ${form.organisation || 'Not provided'}`,
+      `Email: ${form.email}`,
+      `Phone: ${form.phone || 'Not provided'}`,
+      `Interested in: ${form.service}`,
+      `Message: ${form.message || 'Not provided'}`,
+    ].join('\n');
+
+    window.open(
+      `https://wa.me/27646495947?text=${encodeURIComponent(whatsappMessage)}`,
+      '_blank',
+      'noopener,noreferrer'
+    );
     setSubmitted(true);
     setForm(initialState);
   };
@@ -62,8 +77,8 @@ export default function EnquiryForm() {
         <textarea name="message" value={form.message} onChange={handleChange} placeholder="Tell us how we can help" rows={5} />
       </label>
 
-      <button type="submit" className="primary-btn">Send enquiry</button>
-      {submitted && <p className="form-success">Thanks! Your enquiry has been noted and our team will contact you soon.</p>}
+      <button type="submit" className="primary-btn">Send enquiry on WhatsApp</button>
+      {submitted && <p className="form-success">WhatsApp opened with your enquiry ready to send.</p>}
     </form>
   );
 }
