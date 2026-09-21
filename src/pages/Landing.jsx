@@ -4,7 +4,7 @@ import SectionHeading from '../components/SectionHeading';
 import ServiceCard from '../components/ServiceCard';
 import EnquiryForm from '../components/EnquiryForm';
 import { accreditations, caseStudies, company, methodology, milestones, services, audience } from '../data/siteContent';
-import logo from '../../Logo.png';
+import logo from '../../brand-logo.png';
 
 export default function Landing() {
   const location = useLocation();
@@ -42,11 +42,11 @@ export default function Landing() {
       <section className="hero-section">
         <div className="hero-copy">
           <img src={logo} alt={`${company.name} official logo`} className="hero-logo" />
-          <span className="eyebrow">Accredited training & safety solutions</span>
-          <h1>{company.tagline}</h1>
+          <span className="eyebrow">Skills centre • Safety solutions • Community impact</span>
+          <h1>Skills for work. Safety for life.</h1>
           <p>
-            Mahloma Tsebo Solutions empowers individuals, businesses, schools and community groups through
-            accredited, practical learning that strengthens safety, compliance and long-term opportunity.
+            {company.name} empowers artisans, caregivers and professionals through practical, accredited
+            training that strengthens employability, workplace safety and lifelong opportunity.
           </p>
 
           <div className="hero-actions">
@@ -55,32 +55,23 @@ export default function Landing() {
           </div>
 
           <div className="mini-stats">
-            <div>
-              <strong>1,000+</strong>
-              <span>individuals trained</span>
-            </div>
-            <div>
-              <strong>50+</strong>
-              <span>organisations served</span>
-            </div>
-            <div>
-              <strong>2016</strong>
-              <span>since establishment</span>
-            </div>
+            <div><strong>2016</strong><span>established in Sedibeng</span></div>
+            <div><strong>1,000+</strong><span>people trained</span></div>
+            <div><strong>50+</strong><span>organisations served</span></div>
           </div>
         </div>
 
         <div className="hero-panel">
           <div className="hero-visual">
             <img
-              src="https://images.unsplash.com/photo-1522202176988-66273c2fd55f?auto=format&fit=crop&w=900&q=80"
-              alt="Mahloma Tsebo training session"
+              src="/team-training.jpeg"
+              alt="Mahloma Tsebo learners and instructors at the training centre"
             />
             <div className="image-badge">Community impact • Workplace readiness</div>
           </div>
           <div className="panel-card spotlight-card">
-            <span className="tiny-label">Core offerings</span>
-            <h3>Workplace safety, accredited learning and community impact.</h3>
+          <span className="tiny-label">Our promise</span>
+          <h3>Practical skills that move people, workplaces and communities forward.</h3>
             <ul>
               {services.slice(0, 4).map((service) => (
                 <li key={service.id}>{service.title}</li>
@@ -96,14 +87,32 @@ export default function Landing() {
       </section>
 
       <section className="trust-bar">
-        <span>Trusted by schools, public institutions, businesses and community organisations</span>
+        <span>QCTO-aligned learning • Occupational safety • Accessible skills development</span>
+      </section>
+
+      <section className="content-section identity-section">
+        <div className="identity-copy">
+          <SectionHeading
+            eyebrow="Who we are"
+            title="A South African skills centre built around opportunity"
+            text="From Duncanville in the Sedibeng region, we deliver accredited, accessible training and safety services that help people become job-ready and organisations become safer."
+          />
+          <div className="value-grid">
+            <article><span>01</span><h3>Our mission</h3><p>To empower artisans, caregivers and professionals through accredited skills that enhance employability, workplace safety and career growth.</p></article>
+            <article><span>02</span><h3>Our vision</h3><p>To be South Africa’s preferred skills development partner through innovative, industry-relevant training and lifelong learning.</p></article>
+          </div>
+        </div>
+        <div className="identity-image">
+          <img src="/training-centre.jpeg" alt="Practical training equipment at the Mahloma Tsebo training centre" />
+          <div className="image-caption">Learning by doing, with safety at the centre.</div>
+        </div>
       </section>
 
       <section id="services" className="content-section">
         <SectionHeading
           eyebrow="What we offer"
-          title="Six service lines designed for safer, stronger communities"
-          text="Our programmes are built to align with South African compliance frameworks and strengthen both personal growth and operational readiness."
+          title="Training and safety solutions for real-world work"
+          text="Our offering brings together occupational qualifications, professional development, early childhood learning and workplace safety support."
         />
 
         <div className="service-grid">
@@ -122,7 +131,7 @@ export default function Landing() {
         <div className="method-grid">
           {methodology.map((item) => (
             <div key={item.title} className="method-card">
-              {item.image && <img src={item.image} alt={item.title} style={{width:'100%', height:140, objectFit:'cover', borderRadius:8, marginBottom:8}} />}
+              {item.image && <img src={item.image} alt={item.title} className="method-image" />}
               <h3>{item.title}</h3>
               <p>{item.description}</p>
             </div>
@@ -132,9 +141,9 @@ export default function Landing() {
 
       <section className="content-section gallery-section">
         <div className="gallery-grid">
-          <img src="https://images.unsplash.com/photo-1544717305-2782549b5136?auto=format&fit=crop&w=900&q=80" alt="Training classroom" />
-          <img src="https://images.unsplash.com/photo-1523240795612-9a054b0db644?auto=format&fit=crop&w=900&q=80" alt="Workshop and facilitation" />
-          <img src="https://images.unsplash.com/photo-1516321318423-f06f85e504b3?auto=format&fit=crop&w=900&q=80" alt="Professional development session" />
+          <img src="/classroom.jpeg" alt="Mahloma Tsebo classroom" />
+          <img src="/safety-equipment.jpeg" alt="Safety training equipment" />
+          <img src="/team-training.jpeg" alt="Mahloma Tsebo training team" />
         </div>
       </section>
 
@@ -142,7 +151,7 @@ export default function Landing() {
         <div>
           <SectionHeading
             eyebrow="Who we serve"
-            title="A service model designed for diverse learners and workplaces"
+            title="Excellence, integrity, innovation and empowerment"
           />
           <ul className="audience-list">
             {audience.map((item) => (
@@ -159,7 +168,7 @@ export default function Landing() {
             ))}
           </div>
           <div style={{marginTop:12}}>
-            <img src="https://images.unsplash.com/photo-1521737604893-d14cc237f11d?auto=format&fit=crop&w=900&q=80" alt="Community training" style={{width:'100%', borderRadius:10, objectFit:'cover'}} />
+            <img src="/safety-equipment.jpeg" alt="Mahloma Tsebo occupational safety equipment" className="impact-image" />
           </div>
         </div>
       </section>

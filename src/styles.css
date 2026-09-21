@@ -995,6 +995,270 @@ code {
   }
 }
 
+/* Mahloma Tsebo brand layer */
+  :root {
+    --primary: #2d2768;
+    --primary-deep: #19143f;
+    --primary-soft: #eeedf8;
+    --accent: #ed1b2f;
+    --accent-soft: #fff0f2;
+    --text: #171735;
+    --muted: #62627b;
+    --border: #e3e2ee;
+    --shadow: rgba(45, 39, 104, 0.16);
+    --primary-04: rgba(45, 39, 104, 0.04);
+    --primary-05: rgba(45, 39, 104, 0.05);
+    --primary-06: rgba(45, 39, 104, 0.06);
+    --primary-08: rgba(45, 39, 104, 0.08);
+    --primary-20: rgba(45, 39, 104, 0.2);
+    --primary-22: rgba(45, 39, 104, 0.22);
+    --primary-78: rgba(45, 39, 104, 0.78);
+    --accent-04: rgba(237, 27, 47, 0.04);
+    --accent-12: rgba(237, 27, 47, 0.12);
+  }
+
+  body {
+    background: #f8f8fc;
+  }
+
+  .topbar {
+    padding: 0.8rem max(1.25rem, calc((100vw - 1200px) / 2));
+    background: rgba(255, 255, 255, 0.96);
+  }
+
+  .brand-logo {
+    width: 4rem;
+    height: 4rem;
+    flex-basis: 4rem;
+  }
+
+  .brand strong {
+    color: var(--primary);
+    text-transform: uppercase;
+  }
+
+  .brand small {
+    color: var(--accent);
+    font-weight: 700;
+  }
+
+  .hero-section {
+    grid-template-columns: 1.05fr 0.95fr;
+    gap: 1.5rem;
+    padding-top: 1.5rem;
+    align-items: start;
+  }
+
+  .hero-copy {
+    position: relative;
+    overflow: hidden;
+    background: var(--primary);
+    border: 0;
+    padding: clamp(2rem, 5vw, 4rem);
+    box-shadow: 0 22px 48px rgba(25, 20, 63, 0.25);
+  }
+
+  .hero-copy::after {
+    content: '';
+    position: absolute;
+    right: -4rem;
+    bottom: -5rem;
+    width: 18rem;
+    height: 18rem;
+    border: 2rem solid rgba(237, 27, 47, 0.85);
+    border-radius: 50%;
+  }
+
+  .hero-logo {
+    position: relative;
+    z-index: 1;
+    width: 6.5rem;
+    height: 6.5rem;
+    padding: 0.4rem;
+  }
+
+  .hero-copy .eyebrow,
+  .hero-copy h1,
+  .hero-copy p {
+    position: relative;
+    z-index: 1;
+  }
+
+  .hero-copy .eyebrow {
+    color: #ffb5bd;
+  }
+
+  .hero-copy h1,
+  .hero-copy p {
+    color: white;
+  }
+
+  .hero-copy h1 {
+    max-width: 620px;
+    font-size: clamp(2.7rem, 5vw, 5.2rem);
+    letter-spacing: -0.04em;
+  }
+
+  .hero-copy p {
+    max-width: 600px;
+    color: #e8e7f5;
+  }
+
+  .hero-copy .primary-btn {
+    background: var(--accent);
+    box-shadow: 0 12px 24px rgba(237, 27, 47, 0.3);
+  }
+
+  .hero-copy .secondary-btn {
+    color: var(--primary);
+  }
+
+  .mini-stats div {
+    position: relative;
+    z-index: 1;
+    background: rgba(255, 255, 255, 0.1);
+    border-color: rgba(255, 255, 255, 0.2);
+  }
+
+  .mini-stats strong,
+  .mini-stats span {
+    color: white;
+  }
+
+  .hero-visual {
+    min-height: 380px;
+  }
+
+  .hero-visual img {
+    min-height: 380px;
+  }
+
+  .image-badge {
+    background: var(--accent);
+  }
+
+  .trust-bar {
+    background: var(--primary);
+    border: 0;
+    color: white;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    font-size: 0.78rem;
+  }
+
+  .identity-section {
+    display: grid;
+    grid-template-columns: 1fr 0.8fr;
+    gap: 2rem;
+    align-items: center;
+  }
+
+  .identity-image {
+    position: relative;
+  }
+
+  .identity-image img {
+    display: block;
+    width: 100%;
+    height: 390px;
+    object-fit: cover;
+    border-radius: 1.5rem;
+    box-shadow: 0 18px 38px var(--shadow);
+  }
+
+  .image-caption {
+    position: absolute;
+    right: 1rem;
+    bottom: 1rem;
+    left: 1rem;
+    padding: 0.8rem 1rem;
+    background: rgba(25, 20, 63, 0.9);
+    border-left: 4px solid var(--accent);
+    color: white;
+    font-weight: 700;
+  }
+
+  .value-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 1rem;
+  }
+
+  .value-grid article {
+    padding: 1.25rem;
+    border-top: 4px solid var(--accent);
+    border-radius: 0.9rem;
+    background: white;
+    box-shadow: 0 10px 24px var(--shadow-soft);
+  }
+
+  .value-grid span {
+    color: var(--accent);
+    font-weight: 800;
+  }
+
+  .value-grid h3 {
+    margin: 0.5rem 0;
+    color: var(--primary);
+  }
+
+  .value-grid p {
+    margin: 0;
+    color: var(--muted);
+    line-height: 1.6;
+    font-size: 0.9rem;
+  }
+
+  .service-card,
+  .method-card,
+  .case-card,
+  .impact-box,
+  .contact-panel {
+    border-top: 4px solid var(--primary);
+  }
+
+  .service-icon {
+    background: var(--accent);
+    color: white;
+  }
+
+  .method-image {
+    width: 100%;
+    height: 140px;
+    margin-bottom: 0.8rem;
+    border-radius: 0.8rem;
+    object-fit: cover;
+  }
+
+  .impact-image {
+    width: 100%;
+    border-radius: 0.8rem;
+    object-fit: cover;
+    max-height: 260px;
+  }
+
+  .section-heading h2 {
+    color: var(--primary);
+    letter-spacing: -0.025em;
+  }
+
+@media (max-width: 900px) {
+  .identity-section {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 640px) {
+  .value-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .hero-visual,
+  .hero-visual img {
+    min-height: 280px;
+  }
+}
+
 @media (max-width: 900px) {
   .topbar {
     flex-direction: column;

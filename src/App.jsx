@@ -4,7 +4,7 @@ import Landing from './pages/Landing';
 import Dashboard from './pages/Dashboard';
 import Auth from './pages/Auth';
 import { company } from './data/siteContent';
-import logo from '../Logo.png';
+import logo from '../brand-logo.png';
 
 export default function App() {
   const [user, setUser] = useState(() => {
